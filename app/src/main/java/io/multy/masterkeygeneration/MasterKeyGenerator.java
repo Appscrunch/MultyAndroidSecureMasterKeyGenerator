@@ -11,7 +11,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.provider.Settings;
-import android.util.Base64;
 
 import com.google.android.gms.iid.InstanceID;
 
@@ -55,8 +54,12 @@ public class MasterKeyGenerator {
             outputStream.write(getInstanceID(context));
             outputStream.write(getKeystoreFingerprint(context));
             outputStream.write(getSecureID(context));
-            return Base64.encodeToString(outputStream.toByteArray(), 0);
+            MessageDigest md = MessageDigest.getInstance(context.getString(R.string.sha_256));
+            md.update(outputStream.toByteArray());
+            return new String(md.digest());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (outputStream != null){
