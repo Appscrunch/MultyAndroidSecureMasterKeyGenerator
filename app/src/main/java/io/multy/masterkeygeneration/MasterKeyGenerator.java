@@ -7,16 +7,18 @@ package io.multy.masterkeygeneration;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.provider.Settings;
 
 import com.google.android.gms.iid.InstanceID;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 public class MasterKeyGenerator {
 
@@ -29,36 +31,24 @@ public class MasterKeyGenerator {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID).getBytes();
     }
 
-    @SuppressLint("PackageManagerGetSignatures")
-    private static byte[] getKeystoreFingerprint(Context context){
-        PackageInfo info;
-        try {
-            info = context.getPackageManager().getPackageInfo(
-                    context.getPackageName(), PackageManager.GET_SIGNATURES);
-
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance(context.getString(R.string.sha));
-                md.update(signature.toByteArray());
-                return md.digest();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    /**
+     * Provide PIN or password if user set it. Method will be used after alpha release
+     * for better secure protection, but it returns empty value for now.
+     *
+     * @return zero if no password or PIN, otherwise bytes of password or PIN.
+     */
+    private static byte[] getUserSecurePassword(){
+            return new byte[0];
     }
 
-    public static String generateKey(Context context){
+    public static byte[] generateKey(Context context){
         ByteArrayOutputStream outputStream = null;
         try {
             outputStream = new ByteArrayOutputStream();
             outputStream.write(getInstanceID(context));
-            outputStream.write(getKeystoreFingerprint(context));
+            outputStream.write(getUserSecurePassword());
             outputStream.write(getSecureID(context));
-            MessageDigest md = MessageDigest.getInstance(context.getString(R.string.sha_256));
-            md.update(outputStream.toByteArray());
-            return new String(md.digest());
-        } catch (IOException e) {
-            e.printStackTrace();
+            return calculateHMAC(context, outputStream.toByteArray());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -71,6 +61,14 @@ public class MasterKeyGenerator {
             }
         }
         return null;
+    }
+
+    private static byte[] calculateHMAC(Context context, byte[] key)
+            throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, context.getString(R.string.hmac_sha_512));
+        Mac mac = Mac.getInstance(context.getString(R.string.hmac_sha_512));
+        mac.init(secretKeySpec);
+        return mac.doFinal();
     }
 
 }
