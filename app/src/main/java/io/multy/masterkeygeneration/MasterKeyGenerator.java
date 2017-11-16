@@ -22,12 +22,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class MasterKeyGenerator {
 
-    private static byte[] getInstanceID(Context context){
+    private static byte[] getInstanceID(Context context) {
         return InstanceID.getInstance(context).getId().getBytes();
     }
 
     @SuppressLint("HardwareIds")
-    private static byte[] getSecureID(Context context){
+    private static byte[] getSecureID(Context context) {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID).getBytes();
     }
 
@@ -37,22 +37,22 @@ public class MasterKeyGenerator {
      *
      * @return zero if no password or PIN, otherwise bytes of password or PIN.
      */
-    private static byte[] getUserSecurePassword(){
-            return new byte[0];
+    private static byte[] getUserSecret() {
+        return new byte[0];
     }
 
-    public static byte[] generateKey(Context context){
+    public static byte[] generateKey(Context context) {
         ByteArrayOutputStream outputStream = null;
         try {
             outputStream = new ByteArrayOutputStream();
             outputStream.write(getInstanceID(context));
-            outputStream.write(getUserSecurePassword());
+            outputStream.write(getUserSecret());
             outputStream.write(getSecureID(context));
             return calculateHMAC(context, outputStream.toByteArray());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (outputStream != null){
+            if (outputStream != null) {
                 try {
                     outputStream.close();
                 } catch (IOException e) {
