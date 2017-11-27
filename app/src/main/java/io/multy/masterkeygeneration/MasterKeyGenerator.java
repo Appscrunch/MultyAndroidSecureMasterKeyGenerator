@@ -11,14 +11,10 @@ import android.provider.Settings;
 
 import com.google.android.gms.iid.InstanceID;
 
+import org.spongycastle.jcajce.provider.digest.SHA3;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 public class MasterKeyGenerator {
 
@@ -48,7 +44,7 @@ public class MasterKeyGenerator {
             outputStream.write(getInstanceID(context));
             outputStream.write(getUserSecret());
             outputStream.write(getSecureID(context));
-            return calculateHMAC(context, outputStream.toByteArray());
+            return calculateSHA3256(outputStream.toByteArray());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -63,12 +59,8 @@ public class MasterKeyGenerator {
         return null;
     }
 
-    private static byte[] calculateHMAC(Context context, byte[] key)
-            throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, context.getString(R.string.hmac_sha_512));
-        Mac mac = Mac.getInstance(context.getString(R.string.hmac_sha_512));
-        mac.init(secretKeySpec);
-        return mac.doFinal();
+    private static byte[] calculateSHA3256(byte[] input){
+        SHA3.DigestSHA3 digestSHA3 = new SHA3.Digest256();
+        return digestSHA3.digest(input);
     }
-
 }

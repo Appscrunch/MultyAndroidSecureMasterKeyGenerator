@@ -2,6 +2,7 @@
     <string name="app_name">masterkeygeneration</string>
     <string name="sha">SHA</string>
     <string name="sha_256">SHA-256</string>
+    <string name="sha_3_256">SHA3-256</string>
     <string name="hmac_sha_512">HmacSHA512</string>
 
 </resources>
